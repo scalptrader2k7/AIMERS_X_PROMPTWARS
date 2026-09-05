@@ -80,6 +80,15 @@ git diff --check
 
 All commands must pass before a release. The relevant Vercel deployment must be Ready before sharing the production URL.
 
+## Final acceptance checks
+
+- [ ] Confirm allergy and medication conflicts use their supported deterministic related-information mappings; confirm an unsupported category has no navigation target and shows the safe explanatory notice.
+- [ ] Confirm the Gemini review-summary request excludes raw pasted report text, excerpts, source quotes, history, browser data, and credentials.
+- [ ] With no Gemini key configured, confirm the summary action returns a controlled unavailable state.
+- [ ] Confirm malformed Gemini output produces a controlled unavailable state rather than unvalidated content.
+- [ ] Confirm a returned summary includes exactly: “For human review only. This is not a diagnosis or medical advice.”
+- [ ] Confirm keyboard activation of conflict navigation moves focus to the related structured profile item and presents its visible related-information label.
+
 ## Test record
 
 | Date | Tester | Environment | Mode | Browser/device | Result | Notes |

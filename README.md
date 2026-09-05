@@ -10,6 +10,23 @@ MedLens is a synthetic-demo application that turns patient-entered information a
 
 Medical report text is often free-form and difficult to organize for review alongside patient-entered context. MedLens provides a review-oriented workspace that keeps source evidence, reported ranges, confidence, and human verification visible without making medical decisions.
 
+## Why MedLens
+
+- Fragmented information becomes a structured, traceable review record.
+- Possible inconsistencies are surfaced by deterministic conflict detection rather than automatically resolved.
+- Source ambiguity remains reviewable through evidence and safe conflict-to-source navigation.
+- Accountability is supported by the processing trace and local correction history.
+- The optional server-side Gemini review summary reduces summarization burden using only allow-listed structured synthetic fields; it does not diagnose or provide medical advice.
+
+## Verification evidence
+
+| Check | Verified evidence |
+| --- | --- |
+| `npm test` | 7 test files / 43 tests passing |
+| `npm run build` | Production build passing |
+| `git diff --check` | No whitespace errors |
+| Security boundaries | Gemini key is server-only; raw report text is excluded from the Gemini payload; Gemini output is not persisted |
+
 ## Features
 
 - Patient intake for age, sex, symptoms, conditions, allergies, medications, and notes.
