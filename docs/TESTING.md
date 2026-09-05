@@ -44,6 +44,8 @@ This checklist provides a repeatable pre-submission and pre-release manual verif
 - [ ] Confirm Review Activity contains no raw pasted report text and shows its local, non-permanent disclosure.
 - [ ] Confirm the review state visibly changes.
 - [ ] Confirm conflicts use possible-inconsistency or requires-clarification wording.
+- [ ] Select **View related information** on a possible conflict and confirm focus moves to the correct structured item.
+- [ ] Confirm related highlights use neutral review-required wording and do not display or persist raw pasted report text.
 - [ ] Confirm the app does not automatically decide which conflicting source is correct.
 - [ ] Confirm clarification questions do not become diagnosis or medical advice.
 - [ ] Confirm clear-record actions require deliberate user confirmation, if that interaction exists.
