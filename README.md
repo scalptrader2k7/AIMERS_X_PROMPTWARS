@@ -6,6 +6,8 @@ MedLens is a synthetic-demo application that turns patient-entered information a
 
 [https://medlens-nine.vercel.app/](https://medlens-nine.vercel.app/)
 
+For a reviewer walkthrough and requirement-to-evidence map, see [docs/JUDGE_GUIDE.md](docs/JUDGE_GUIDE.md).
+
 ## The Problem
 
 Medical report text is often free-form and difficult to organize for review alongside patient-entered context. MedLens provides a review-oriented workspace that keeps source evidence, reported ranges, confidence, and human verification visible without making medical decisions.
