@@ -1,34 +1,114 @@
 # MedLens
 
-MedLens is a synthetic-demo web application that organizes patient-entered information and pasted report text into a structured, source-traceable record for human review. It is not a diagnostic, treatment, or emergency-guidance tool.
+MedLens is a synthetic-demo application that turns patient-entered information and pasted report text into a structured, traceable record for human review.
 
-## Run locally
+## Live Demo
 
-1. Copy `.env.example` to `.env.local` and optionally set a server-only `OPENAI_API_KEY`.
-2. Run `npm install`.
-3. Run `npm run dev`.
+[https://medlens-nine.vercel.app/](https://medlens-nine.vercel.app/)
 
-Without a key, MedLens uses its clearly labeled deterministic synthetic fallback so the complete demo flow still works. Use only synthetic information. Run `npm test` and `npm run build` before deployment.
+## The Problem
 
-## Challenge requirement coverage
+Medical report text is often free-form and difficult to organize for review alongside patient-entered context. MedLens provides a review-oriented workspace that keeps source evidence, reported ranges, confidence, and human verification visible without making medical decisions.
 
-| Requirement | Implemented evidence |
-| --- | --- |
-| Patient intake | `app/page.tsx`, `lib/medical-record.ts` |
-| Pasted report processing | `app/api/extract/route.ts`, `lib/extraction.ts` |
-| Structured record and review dashboard | `components/record-dashboard.tsx` |
-| Source-range-only status | `lib/lab-status.ts`, `lib/review-utils.ts` |
+## Features
+
+- Patient intake for age, sex, symptoms, conditions, allergies, medications, and notes.
+- Pasted synthetic report processing through a validated server-side route.
+- Structured record and review dashboard with profile, laboratories, observations, and a patient-friendly overview.
+- Source-range-only result status: Low, Normal, High, or Not assessed is determined only from a usable range printed in the report.
+- Deterministic label normalization that preserves the exact reported laboratory label.
+- Literal conflict checks for explicit allergy and medication mismatches; MedLens does not decide which value is correct.
+- Context-aware clarification questions for missing source or intake details.
+- Provenance, evidence snippets, confidence, source type, and review state for extracted information.
+- A safe, source-bounded summary with non-diagnostic limitations.
+- Laboratory editing, manual verification, local structured-record continuity, and JSON export.
+- A clearly labeled deterministic synthetic fallback when live AI processing is unavailable.
+
+## Demo Workflow
+
+1. Open the [live demo](https://medlens-nine.vercel.app/).
+2. Select **Load Demo Report** or enter synthetic patient and report information.
+3. Select **Create Structured Record**.
+4. Review the dashboard, source evidence, confidence, status rationale, possible flags, and clarification questions.
+5. Optionally edit a result, mark it verified, or export the structured record as JSON.
+
+## Challenge Requirement Coverage
+
+| Requirement                                                           | Implemented evidence                                                                  |
+| --------------------------------------------------------------------- | ------------------------------------------------------------------------------------- |
+| Patient intake                                                        | `app/page.tsx`, `lib/medical-record.ts`                                               |
+| Pasted report processing                                              | `app/api/extract/route.ts`, `lib/extraction.ts`                                       |
+| Structured record and review dashboard                                | `components/record-dashboard.tsx`                                                     |
+| Source-range-only status                                              | `lib/lab-status.ts`, `lib/review-utils.ts`                                            |
 | Label normalization, literal conflict checks, clarification questions | `lib/normalization.ts`, `lib/conflict-detection.ts`, `lib/clarification-questions.ts` |
-| Provenance, evidence, confidence, review state | `lib/medical-record.ts`, `components/record-dashboard.tsx` |
-| Safe summary | `lib/extraction.ts`, `components/record-dashboard.tsx` |
-| Synthetic fallback | `lib/fallback-record.ts` |
-| Edit, verify, local continuity, JSON export | `components/record-dashboard.tsx`, `lib/review-utils.ts` |
-| Tests | `tests/` |
+| Provenance, evidence, confidence, review state                        | `lib/medical-record.ts`, `components/record-dashboard.tsx`                            |
+| Safe summary                                                          | `lib/extraction.ts`, `components/record-dashboard.tsx`                                |
+| Synthetic fallback                                                    | `lib/fallback-record.ts`                                                              |
+| Edit, verify, local continuity, JSON export                           | `components/record-dashboard.tsx`, `lib/review-utils.ts`                              |
+| Tests                                                                 | `tests/`                                                                              |
 
-## Safety limitations
+## Technology
 
-MedLens does not provide diagnosis, treatment, medication changes, dosage advice, emergency guidance, clinical validation, or compliance certification. The pasted report text remains available only in the active browser session for source review. It is sent to MedLens’s processing route when a record is created, but is not stored in browser localStorage, included in exports, uploaded as a file, or retained as a permanent clinical record. When live AI processing is unavailable, the labeled synthetic demo record does not claim its values were extracted from the entered text.
+- Next.js App Router, React, and TypeScript
+- Tailwind CSS
+- Zod validation schemas
+- OpenAI JavaScript SDK with a server-side Responses API route
+- Vitest unit tests
+- Browser `localStorage` for the structured record, processing metadata, and local review history only
 
-## Vercel
+## Run Locally
 
-Import the repository into Vercel, add `OPENAI_API_KEY` only if live extraction is desired, and run the standard Next.js build command. Never use a `NEXT_PUBLIC_` API-key variable.
+1. Install dependencies:
+
+```bash
+npm install
+```
+
+2. Copy `.env.example` to `.env.local`.
+3. Optionally configure the server-only `OPENAI_API_KEY` in `.env.local`:
+
+```bash
+OPENAI_API_KEY=your_key_here
+```
+
+The key is optional and must remain server-side.
+
+4. Start the development server:
+
+```bash
+npm run dev
+```
+
+5. Before deployment, run:
+
+```bash
+npm test
+npm run build
+```
+
+Without `OPENAI_API_KEY`, MedLens remains usable with its clearly labeled deterministic synthetic fallback. Use synthetic information only for this demo.
+
+## Deployment
+
+- Production URL: [https://medlens-nine.vercel.app/](https://medlens-nine.vercel.app/)
+- Production branch: `main`
+- `OPENAI_API_KEY` is optional and must remain server-side.
+
+To enable optional live extraction in Vercel, add `OPENAI_API_KEY` in the project environment variables and redeploy. Keep this key server-side. Never use `NEXT_PUBLIC_OPENAI_API_KEY` or expose API credentials to the browser.
+
+## Safety and Privacy Limitations
+
+- MedLens does not provide diagnosis, treatment recommendations, medication changes, dosage advice, emergency guidance, clinical validation, or compliance certification.
+- It must not be used to make medical decisions or replace qualified clinical assessment.
+- Use synthetic information only for this demo.
+- Pasted report text remains available only in the active browser session for source review.
+- Pasted report text is sent to MedLens's processing route when a record is created, but is not stored in browser localStorage, included in JSON exports, uploaded as a file, or retained as a permanent clinical record.
+- If live AI processing is unavailable, the clearly labeled deterministic synthetic fallback does not claim that its values were extracted from user-entered report text.
+
+## Future Improvements
+
+- Consent-based workflows for appropriate real-world deployments.
+- Clinician-defined review policies and configurable workflows.
+- Broader parsing support for additional report formats.
+- A compliant storage architecture for approved use cases.
+- Collaboration and review workflows for authorized teams.
