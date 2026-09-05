@@ -21,6 +21,7 @@ Browser dashboard
 | Raw report text, excerpts, source quotes | Excluded from Gemini requests, URL/navigation state, browser storage, exports, and review history. |
 | `GEMINI_API_KEY` | Server-only environment secret; excluded from the repository, client bundle, and network payloads. |
 | Gemini output | Server validated; displayed transiently as text only; not persisted, exported, or added to review history. |
+| Session-review acknowledgment | React component memory keyed by a fixed conflict category; resets on refresh and is excluded from URLs, browser storage, exports, review history, and Gemini requests. |
 
 ## Responsibility split
 

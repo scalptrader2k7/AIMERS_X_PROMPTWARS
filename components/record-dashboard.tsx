@@ -7,6 +7,7 @@ import { generateClarificationQuestions } from "@/lib/clarification-questions";
 import { buildProcessingTrace } from "@/lib/processing-trace";
 import { getConflictNavigationTarget } from "@/lib/conflict-navigation";
 import { buildReviewSummaryRequest, reviewSummarySchema, type ReviewSummary } from "@/lib/review-summary";
+import { isAcknowledged, SESSION_ACKNOWLEDGMENT_STATUS, toSessionAcknowledgmentId, toggleAcknowledgment, type SessionAcknowledgmentId } from "@/lib/session-review-acknowledgment";
 import type { ExtractionResponse, LabResult, MedicalRecord } from "@/lib/medical-record";
 
 type Props = { record: MedicalRecord; processing: ExtractionResponse["processing"]; reportText: string | null; history: ReviewHistoryEvent[]; onRecordChange: (record: MedicalRecord, event?: ReviewHistoryEvent) => void; onClear: () => void };
@@ -22,18 +23,17 @@ export function RecordDashboard({ record, processing, reportText, history, onRec
   const [editError, setEditError] = useState("");
   const [confirmClear, setConfirmClear] = useState(false);
   const [notice, setNotice] = useState("");
-  const [acknowledgedConflicts, setAcknowledgedConflicts] = useState<string[]>([]);
+  const [acknowledgedConflicts, setAcknowledgedConflicts] = useState<Set<SessionAcknowledgmentId>>(new Set());
   const [relatedCategory, setRelatedCategory] = useState<"allergy" | "medication" | null>(null);
   const [aiSummary, setAiSummary] = useState<ReviewSummary | null>(null);
   const [isGeneratingSummary, setIsGeneratingSummary] = useState(false);
   const [summaryError, setSummaryError] = useState("");
   const selected = record.labs.find((lab) => lab.id === selectedId) ?? record.labs[0];
   const conflicts = useMemo(() => detectConflicts(record), [record]);
-  const visibleConflicts = conflicts.filter((conflict) => !acknowledgedConflicts.includes(conflict.id));
   const clarifications = useMemo(() => generateClarificationQuestions(record), [record]);
-  const metrics = useMemo(() => calculateReviewMetrics(record, visibleConflicts.length, clarifications.length), [record, visibleConflicts.length, clarifications.length]);
-  const quality = useMemo(() => evaluateRecordQuality(record, { conflicts: visibleConflicts.length, clarifications: clarifications.length }), [record, visibleConflicts.length, clarifications.length]);
-  const processingTrace = useMemo(() => buildProcessingTrace({ record, processing, possibleConflictCount: visibleConflicts.length, clarificationQuestionCount: clarifications.length }), [record, processing, visibleConflicts.length, clarifications.length]);
+  const metrics = useMemo(() => calculateReviewMetrics(record, conflicts.length, clarifications.length), [record, conflicts.length, clarifications.length]);
+  const quality = useMemo(() => evaluateRecordQuality(record, { conflicts: conflicts.length, clarifications: clarifications.length }), [record, conflicts.length, clarifications.length]);
+  const processingTrace = useMemo(() => buildProcessingTrace({ record, processing, possibleConflictCount: conflicts.length, clarificationQuestionCount: clarifications.length }), [record, processing, conflicts.length, clarifications.length]);
   const isFallback = processing.mode === "synthetic_fallback";
 
   function saveEdit() {
@@ -70,7 +70,7 @@ export function RecordDashboard({ record, processing, reportText, history, onRec
   async function generateAiReviewSummary() {
     setIsGeneratingSummary(true); setSummaryError("");
     try {
-      const response = await fetch("/api/review-summary", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(buildReviewSummaryRequest(record, visibleConflicts, clarifications)) });
+      const response = await fetch("/api/review-summary", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(buildReviewSummaryRequest(record, conflicts, clarifications)) });
       const payload: unknown = await response.json();
       const parsed = reviewSummarySchema.safeParse(payload);
       if (!response.ok || !parsed.success) { setAiSummary(null); setSummaryError("AI review summary is unavailable. The structured record remains available for human review."); return; }
@@ -99,7 +99,7 @@ export function RecordDashboard({ record, processing, reportText, history, onRec
         <section className="overview-card" aria-labelledby="overview-title"><h2 id="overview-title">Patient-friendly overview</h2><p className="summary-meta">AI-generated · Informational — not clinical advice</p><p>{record.summary.text}</p></section>
         <AiReviewSummary summary={aiSummary} error={summaryError} pending={isGeneratingSummary} onGenerate={generateAiReviewSummary} />
         <ProcessingTrace stages={processingTrace} />
-        {visibleConflicts.length > 0 && <section className="quality-card" aria-labelledby="conflicts-title"><h2 id="conflicts-title">Possible information inconsistency</h2>{visibleConflicts.map((conflict) => <article className="conflict-item" key={conflict.id}><p><strong>{label(conflict.category)}</strong></p><p>Patient-provided: {conflict.intakeValue}</p><p>AI-extracted: {conflict.reportValue}</p><p>Please review the sources. MedLens does not determine which value is correct.</p><div className="row-actions"><button className="text-button" type="button" onClick={() => { setAcknowledgedConflicts((items) => [...items, conflict.id]); onRecordChange(record, createReviewHistoryEvent({ action: "conflict_acknowledged", targetLabel: label(conflict.category) })); setNotice("Possible inconsistency acknowledged for this session."); }}>Acknowledge for this session</button>{getConflictNavigationTarget(conflict) ? <button className="text-button" type="button" aria-label={`View related information for ${label(conflict.category)}`} onClick={() => viewRelatedInformation(conflict)}>View related information</button> : <p>Related structured information is not available for this possible inconsistency.</p>}</div></article>)}</section>}
+        {conflicts.length > 0 && <section className="quality-card" aria-labelledby="conflicts-title"><h2 id="conflicts-title">Possible information inconsistency</h2><p>Acknowledgments are temporary and reset when this page is refreshed. They are not diagnostic decisions.</p>{conflicts.map((conflict) => { const acknowledgmentId = toSessionAcknowledgmentId(conflict.category); const acknowledged = isAcknowledged(acknowledgedConflicts, acknowledgmentId); return <article className="conflict-item" key={conflict.id}><p><strong>{label(conflict.category)}</strong></p><p>Patient-provided: {conflict.intakeValue}</p><p>AI-extracted: {conflict.reportValue}</p><p>Please review the sources. MedLens does not determine which value is correct.</p>{acknowledged && <p className="acknowledgment-status" role="status">{SESSION_ACKNOWLEDGMENT_STATUS}</p>}<div className="row-actions"><button className="text-button" type="button" aria-pressed={acknowledged} onClick={() => setAcknowledgedConflicts((items) => toggleAcknowledgment(items, acknowledgmentId))}>{acknowledged ? "Remove acknowledgment" : "Acknowledge for review"}</button>{getConflictNavigationTarget(conflict) ? <button className="text-button" type="button" aria-label={`View related information for ${label(conflict.category)}`} onClick={() => viewRelatedInformation(conflict)}>View related information</button> : <p>Related structured information is not available for this possible inconsistency.</p>}</div></article>; })}</section>}
         <Clarifications questions={clarifications} />
         <Scorecard metrics={metrics} />
         <QualityGate quality={quality} />

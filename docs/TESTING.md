@@ -88,6 +88,8 @@ All commands must pass before a release. The relevant Vercel deployment must be 
 - [ ] Confirm malformed Gemini output produces a controlled unavailable state rather than unvalidated content.
 - [ ] Confirm a returned summary includes exactly: “For human review only. This is not a diagnosis or medical advice.”
 - [ ] Confirm keyboard activation of conflict navigation moves focus to the related structured profile item and presents its visible related-information label.
+- [ ] For a possible conflict, acknowledge it, toggle the acknowledgment off, refresh to verify reset, confirm keyboard focus and `aria-pressed` state, and confirm the conflict remains visible.
+- [ ] Confirm the session-review acknowledgment helper tests cover safe IDs, independent toggles, and the exact temporary/non-resolution wording.
 
 ## Test record
 

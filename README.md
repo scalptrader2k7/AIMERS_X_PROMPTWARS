@@ -41,6 +41,7 @@ Medical report text is often free-form and difficult to organize for review alon
 - Laboratory editing, manual verification, local structured-record continuity, and JSON export.
 - A clearly labeled deterministic synthetic fallback when live AI processing is unavailable.
 - Optional Gemini AI review summary using only a minimized structured review payload.
+- Session-only reviewer acknowledgment for possible conflicts; it resets on refresh, does not resolve a conflict, and is not sent to Gemini or persisted.
 
 ## Demo Workflow
 
