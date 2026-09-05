@@ -19,6 +19,7 @@ This checklist provides a repeatable pre-submission and pre-release manual verif
 - [ ] Select **Load Demo Report** and confirm it populates the synthetic demo information.
 - [ ] Select **Create Structured Record** and confirm the request completes.
 - [ ] Confirm the dashboard displays structured patient and review content.
+- [ ] Confirm the Record Processing Trace shows the seven workflow stages with readable status and safe evidence statements.
 - [ ] Confirm source evidence and provenance are visible.
 - [ ] Confirm confidence and review states are visible where applicable.
 - [ ] Confirm a safe, non-diagnostic summary is visible.
