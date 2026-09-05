@@ -2,7 +2,7 @@
 
 ## Problem
 
-Fragmented patient-entered information and report-derived findings can create a slow, error-prone human-review workflow. The challenge is to organize information, surface possible inconsistencies, preserve evidence, and avoid overclaiming automated clinical decision-making.
+Fragmented patient-entered information and report-derived findings can create a slow, error-prone human-review workflow. MedLens organizes synthetic information, surfaces possible inconsistencies, preserves evidence, and avoids overclaiming automated clinical decision-making.
 
 ## Intended user
 
