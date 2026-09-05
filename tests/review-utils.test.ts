@@ -1,7 +1,7 @@
 import { describe, expect, it } from "vitest";
 import { demoPatient, demoReport } from "../lib/demo-data";
 import { createFallbackRecord } from "../lib/fallback-record";
-import { applyLabEdit, calculateReviewMetrics, deserializeReview, evaluateRecordQuality, getLabStatusRationale, serializeReview, type StoredReview, verifyLab } from "../lib/review-utils";
+import { applyLabEdit, calculateReviewMetrics, createStructuredRecordExport, deserializeReview, evaluateRecordQuality, getLabStatusRationale, serializeReview, type StoredReview, verifyLab } from "../lib/review-utils";
 
 const request = { patient: demoPatient, reportText: demoReport, isSyntheticDemo: true };
 const record = () => createFallbackRecord(request, "demo_mode", new Date("2026-09-05T00:00:00.000Z"));
@@ -35,11 +35,30 @@ describe("review utilities", () => {
     expect(edited.labs[0]).toMatchObject({ value: "11.2", verificationState: "needs_review", provenance: "ai_extracted", status: "low" });
   });
 
-  it("serializes only the structured review state", () => {
+  it("excludes raw pasted report text from local persistence while retaining review state", () => {
     const value: StoredReview = { record: record(), processing: { mode: "synthetic_fallback", fallbackReason: "demo_mode", notice: "Synthetic demo record — live AI processing unavailable." }, history: [{ at: "2026-09-05T00:00:00.000Z", label: "Structured record generated" }] };
-    const restored = deserializeReview(serializeReview(value));
+    const rawReportText = "SYNTHETIC_RAW_REPORT_TEXT_MUST_NOT_BE_STORED";
+    const pageState = { ...value, reportText: rawReportText };
+    const serialized = serializeReview({ record: pageState.record, processing: pageState.processing, history: pageState.history });
+    const restored = deserializeReview(serialized);
+    expect(Object.keys(JSON.parse(serialized)).sort()).toEqual(["history", "processing", "record"]);
     expect(restored?.record.labs).toHaveLength(3);
-    expect(serializeReview(value)).not.toContain(demoReport);
+    expect(restored?.processing).toEqual(value.processing);
+    expect(restored?.history).toEqual(value.history);
+    expect(serialized).not.toContain(rawReportText);
+    expect(serialized).not.toContain(demoReport);
     expect(deserializeReview("not json")).toBeNull();
+  });
+
+  it("excludes raw pasted report text from JSON export while retaining review data", () => {
+    const value: StoredReview = { record: record(), processing: { mode: "synthetic_fallback", fallbackReason: "demo_mode", notice: "Synthetic demo record — live AI processing unavailable." }, history: [{ at: "2026-09-05T00:00:00.000Z", label: "Structured record generated" }] };
+    const rawReportText = "SYNTHETIC_RAW_REPORT_TEXT_MUST_NOT_BE_EXPORTED";
+    const pageState = { ...value, reportText: rawReportText };
+    const exported = createStructuredRecordExport(pageState.record, pageState.processing, "2026-09-05T02:00:00.000Z");
+    const serialized = JSON.stringify(exported);
+    expect(Object.keys(exported).sort()).toEqual(["exportedAt", "processing", "record"]);
+    expect(exported).toMatchObject({ record: value.record, processing: value.processing, exportedAt: "2026-09-05T02:00:00.000Z" });
+    expect(serialized).not.toContain(rawReportText);
+    expect(serialized).not.toContain(demoReport);
   });
 });

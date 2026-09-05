@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { POST } from "../app/api/extract/route";
+import { handleExtractionRequest, POST } from "../app/api/extract/route";
 import { demoPatient, demoReport } from "../lib/demo-data";
 import { processExtraction } from "../lib/extraction";
 import { createFallbackRecord } from "../lib/fallback-record";
@@ -17,6 +17,38 @@ describe("safe extraction processing", () => {
     const response = await POST(new Request("http://localhost/api/extract", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ reportText: "" }) }));
     expect(response.status).toBe(400);
     await expect(response.json()).resolves.toEqual({ error: "Check the patient details and report text, then try again." });
+  });
+
+  it("rejects a non-JSON request without echoing its body", async () => {
+    const requestContent = "SYNTHETIC_NON_JSON_CONTENT_MUST_NOT_BE_ECHOED";
+    const response = await POST(new Request("http://localhost/api/extract", { method: "POST", headers: { "content-type": "text/plain" }, body: requestContent }));
+    const payload = await response.json();
+    expect(response.status).toBe(415);
+    expect(payload).toEqual({ error: "Send a JSON request to create a structured record." });
+    expect(JSON.stringify(payload)).not.toContain(requestContent);
+  });
+
+  it("rejects malformed JSON without echoing the payload", async () => {
+    const requestContent = '{"synthetic":"SYNTHETIC_MALFORMED_CONTENT_MUST_NOT_BE_ECHOED"';
+    const response = await POST(new Request("http://localhost/api/extract", { method: "POST", headers: { "content-type": "application/json" }, body: requestContent }));
+    const payload = await response.json();
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "The request body must contain valid JSON." });
+    expect(JSON.stringify(payload)).not.toContain("SYNTHETIC_MALFORMED_CONTENT_MUST_NOT_BE_ECHOED");
+  });
+
+  it("rejects an oversized report before invoking processing", async () => {
+    let processingCalls = 0;
+    const reportText = "x".repeat(20_001);
+    const response = await handleExtractionRequest(
+      new Request("http://localhost/api/extract", { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify({ patient: demoPatient, reportText, isSyntheticDemo: true }) }),
+      async () => { processingCalls += 1; throw new Error("Processing must not run for rejected input."); },
+    );
+    const payload = await response.json();
+    expect(response.status).toBe(400);
+    expect(payload).toEqual({ error: "Check the patient details and report text, then try again." });
+    expect(processingCalls).toBe(0);
+    expect(JSON.stringify(payload)).not.toContain(reportText);
   });
 
   it("uses a valid synthetic fallback when no API key is available", async () => {

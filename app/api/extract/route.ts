@@ -4,7 +4,10 @@ import { extractionRequestSchema } from "@/lib/medical-record";
 
 export const runtime = "nodejs";
 
-export async function POST(request: Request) {
+export async function handleExtractionRequest(
+  request: Request,
+  process = processExtraction,
+) {
   if (!request.headers.get("content-type")?.includes("application/json")) {
     return NextResponse.json({ error: "Send a JSON request to create a structured record." }, { status: 415 });
   }
@@ -18,6 +21,10 @@ export async function POST(request: Request) {
   if (!parsed.success) {
     return NextResponse.json({ error: "Check the patient details and report text, then try again." }, { status: 400 });
   }
-  const response = await processExtraction(parsed.data);
+  const response = await process(parsed.data);
   return NextResponse.json(response);
+}
+
+export async function POST(request: Request) {
+  return handleExtractionRequest(request);
 }

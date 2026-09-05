@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState } from "react";
-import { applyLabEdit, calculateReviewMetrics, evaluateRecordQuality, getLabStatusRationale, labEditSchema, verifyLab, type LabEdit } from "@/lib/review-utils";
+import { applyLabEdit, calculateReviewMetrics, createStructuredRecordExport, evaluateRecordQuality, getLabStatusRationale, labEditSchema, verifyLab, type LabEdit } from "@/lib/review-utils";
 import { detectConflicts } from "@/lib/conflict-detection";
 import { generateClarificationQuestions } from "@/lib/clarification-questions";
 import type { ExtractionResponse, LabResult, MedicalRecord } from "@/lib/medical-record";
@@ -44,7 +44,7 @@ export function RecordDashboard({ record, processing, reportText, history, onRec
   }
 
   function exportJson() {
-    const payload = { record, processing, exportedAt: new Date().toISOString() };
+    const payload = createStructuredRecordExport(record, processing, new Date().toISOString());
     const blob = new Blob([JSON.stringify(payload, null, 2)], { type: "application/json" });
     const url = URL.createObjectURL(blob); const anchor = document.createElement("a");
     anchor.href = url; anchor.download = "medlens-structured-record.json"; anchor.click(); URL.revokeObjectURL(url);

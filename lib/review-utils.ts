@@ -1,7 +1,7 @@
 import { z } from "zod";
 import { classifyLabStatus } from "@/lib/lab-status";
 import { normalizeLabName } from "@/lib/normalization";
-import { fallbackReasonSchema, medicalRecordSchema, patientIntakeSchema, type LabResult, type MedicalRecord } from "@/lib/medical-record";
+import { fallbackReasonSchema, medicalRecordSchema, patientIntakeSchema, type ExtractionResponse, type LabResult, type MedicalRecord } from "@/lib/medical-record";
 
 export const RECORD_STORAGE_KEY = "medlens.structured-demo-record.v1";
 
@@ -89,3 +89,17 @@ const storedRecordSchema = z.object({ record: medicalRecordSchema, processing: z
 export type StoredReview = z.infer<typeof storedRecordSchema>;
 export function serializeReview(value: StoredReview): string { return JSON.stringify(value); }
 export function deserializeReview(value: string | null): StoredReview | null { const parsed = z.string().safeParse(value); if (!parsed.success || !value) return null; const json = (() => { try { return JSON.parse(value); } catch { return null; } })(); return storedRecordSchema.safeParse(json).success ? storedRecordSchema.parse(json) : null; }
+
+export type StructuredRecordExport = {
+  record: MedicalRecord;
+  processing: ExtractionResponse["processing"];
+  exportedAt: string;
+};
+
+export function createStructuredRecordExport(
+  record: MedicalRecord,
+  processing: ExtractionResponse["processing"],
+  exportedAt: string,
+): StructuredRecordExport {
+  return { record, processing, exportedAt };
+}
