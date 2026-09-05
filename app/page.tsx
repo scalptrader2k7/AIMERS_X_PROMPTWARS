@@ -5,11 +5,10 @@ import { RecordDashboard } from "@/components/record-dashboard";
 import { demoPatient, demoReport } from "@/lib/demo-data";
 import { extractionResponseSchema, patientIntakeSchema } from "@/lib/medical-record";
 import type { ExtractionResponse, MedicalRecord } from "@/lib/medical-record";
-import { deserializeReview, RECORD_STORAGE_KEY, serializeReview } from "@/lib/review-utils";
+import { createReviewHistoryEvent, deserializeReview, RECORD_STORAGE_KEY, serializeReview, type ReviewHistoryEvent } from "@/lib/review-utils";
 
 type IntakeField = "age" | "sex" | "symptoms" | "existingConditions" | "allergies" | "medications" | "notes";
 type IntakeDraft = Record<IntakeField, string>;
-type HistoryEvent = { at: string; label: string };
 
 const emptyDraft: IntakeDraft = {
   age: "",
@@ -65,8 +64,8 @@ export default function Home() {
   const [isProcessing, setIsProcessing] = useState(false);
   const [record, setRecord] = useState<MedicalRecord | null>(null);
   const [processing, setProcessing] = useState<ExtractionResponse["processing"] | null>(null);
-  const [history, setHistory] = useState<HistoryEvent[]>([]);
-  const [savedReview, setSavedReview] = useState<{ record: MedicalRecord; processing: ExtractionResponse["processing"]; history: HistoryEvent[] } | null>(null);
+  const [history, setHistory] = useState<ReviewHistoryEvent[]>([]);
+  const [savedReview, setSavedReview] = useState<{ record: MedicalRecord; processing: ExtractionResponse["processing"]; history: ReviewHistoryEvent[] } | null>(null);
 
   useEffect(() => {
     const saved = deserializeReview(window.localStorage.getItem(RECORD_STORAGE_KEY));
@@ -119,7 +118,7 @@ export default function Home() {
       const now = new Date().toISOString();
       setRecord(parsedResponse.data.record);
       setProcessing(parsedResponse.data.processing);
-      setHistory([{ at: now, label: "Intake captured" }, { at: now, label: "Structured record generated" }]);
+      setHistory([createReviewHistoryEvent({ at: now, action: "record_created", targetLabel: "Structured record" })]);
     } catch {
       setAnnouncement("The record could not be created. Your entered information is still available to review.");
     } finally {
@@ -127,9 +126,9 @@ export default function Home() {
     }
   }
 
-  function updateRecord(nextRecord: MedicalRecord, event?: string) {
+  function updateRecord(nextRecord: MedicalRecord, event?: ReviewHistoryEvent) {
     setRecord(nextRecord);
-    if (event) setHistory((current) => [...current, { at: new Date().toISOString(), label: event }]);
+    if (event) setHistory((current) => [...current, event]);
   }
 
   function clearRecord() {

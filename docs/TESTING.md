@@ -39,6 +39,9 @@ This checklist provides a repeatable pre-submission and pre-release manual verif
 - [ ] Edit an extracted laboratory or record field.
 - [ ] Save or apply the edit.
 - [ ] Mark a field as verified.
+- [ ] Confirm editing a field creates a Review Activity item with safe before and after values.
+- [ ] Confirm verifying a field creates a Review Activity item with a review-state transition.
+- [ ] Confirm Review Activity contains no raw pasted report text and shows its local, non-permanent disclosure.
 - [ ] Confirm the review state visibly changes.
 - [ ] Confirm conflicts use possible-inconsistency or requires-clarification wording.
 - [ ] Confirm the app does not automatically decide which conflicting source is correct.

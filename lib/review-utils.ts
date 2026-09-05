@@ -85,7 +85,21 @@ export function verifyLab(record: MedicalRecord, labId: string, verifiedAt = new
   return { ...record, labs: record.labs.map((lab) => lab.id === labId ? { ...lab, provenance: "user_verified", sourceType: "user_verified", verificationState: "verified", verifiedAt } : lab) };
 }
 
-const storedRecordSchema = z.object({ record: medicalRecordSchema, processing: z.object({ mode: z.enum(["ai", "synthetic_fallback"]), fallbackReason: fallbackReasonSchema.optional(), notice: z.string() }), history: z.array(z.object({ at: z.string().datetime(), label: z.string().max(300) })).max(200) });
+export const reviewActionSchema = z.enum(["record_created", "lab_edited", "lab_verified", "conflict_acknowledged"]);
+export type ReviewAction = z.infer<typeof reviewActionSchema>;
+export const reviewHistoryEventSchema = z.object({ id: z.string().trim().min(1).max(240), at: z.string().datetime(), action: reviewActionSchema, targetLabel: z.string().trim().min(1).max(200), priorDisplayValue: z.string().trim().min(1).max(200).optional(), updatedDisplayValue: z.string().trim().min(1).max(200).optional(), reviewStateTransition: z.string().trim().min(1).max(120).optional() });
+export type ReviewHistoryEvent = z.infer<typeof reviewHistoryEventSchema>;
+
+export function createReviewHistoryEvent(event: Omit<ReviewHistoryEvent, "id" | "at"> & { at?: string; id?: string }): ReviewHistoryEvent {
+  const at = event.at ?? new Date().toISOString();
+  return reviewHistoryEventSchema.parse({ ...event, at, id: event.id ?? `${event.action}-${at}` });
+}
+
+export function sortReviewHistoryNewestFirst(history: ReviewHistoryEvent[]): ReviewHistoryEvent[] { return [...history].sort((left, right) => right.at.localeCompare(left.at)); }
+
+export function reviewActionLabel(action: ReviewAction): string { return ({ record_created: "Record created", lab_edited: "Laboratory result edited", lab_verified: "Laboratory result verified", conflict_acknowledged: "Possible inconsistency acknowledged" })[action]; }
+
+const storedRecordSchema = z.object({ record: medicalRecordSchema, processing: z.object({ mode: z.enum(["ai", "synthetic_fallback"]), fallbackReason: fallbackReasonSchema.optional(), notice: z.string() }), history: z.array(reviewHistoryEventSchema).max(200) });
 export type StoredReview = z.infer<typeof storedRecordSchema>;
 export function serializeReview(value: StoredReview): string { return JSON.stringify(value); }
 export function deserializeReview(value: string | null): StoredReview | null { const parsed = z.string().safeParse(value); if (!parsed.success || !value) return null; const json = (() => { try { return JSON.parse(value); } catch { return null; } })(); return storedRecordSchema.safeParse(json).success ? storedRecordSchema.parse(json) : null; }
