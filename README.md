@@ -23,6 +23,7 @@ Medical report text is often free-form and difficult to organize for review alon
 - A safe, source-bounded summary with non-diagnostic limitations.
 - Laboratory editing, manual verification, local structured-record continuity, and JSON export.
 - A clearly labeled deterministic synthetic fallback when live AI processing is unavailable.
+- Optional Gemini AI review summary using only a minimized structured review payload.
 
 ## Demo Workflow
 
@@ -53,6 +54,7 @@ Medical report text is often free-form and difficult to organize for review alon
 - Tailwind CSS
 - Zod validation schemas
 - OpenAI JavaScript SDK with a server-side Responses API route
+- Google Gemini Developer API through the server-only `@google/genai` SDK
 - Vitest unit tests
 - Browser `localStorage` for the structured record, processing metadata, and local review history only
 
@@ -71,7 +73,21 @@ npm install
 OPENAI_API_KEY=your_key_here
 ```
 
-The key is optional and must remain server-side.
+The keys are optional and must remain server-side.
+
+### Gemini API integration
+
+The dashboard can optionally generate an AI review summary through the same-origin `/api/review-summary` route. The browser sends only a minimized structured review payload; pasted report text, source excerpts, review history, browser storage, and credentials are excluded. Gemini is called only on the server using `GEMINI_API_KEY`.
+
+After copying `.env.example`, add the key only to `.env.local` locally:
+
+```bash
+cp .env.example .env.local
+GEMINI_API_KEY=your_key_here
+GEMINI_MODEL=gemini-2.5-flash
+```
+
+In production, add the same server-only values through Vercel Environment Variables. Never commit the key or expose it to the browser. Use synthetic information only. The generated content is for human review only and is not diagnosis or medical advice.
 
 4. Start the development server:
 
@@ -95,6 +111,8 @@ Without `OPENAI_API_KEY`, MedLens remains usable with its clearly labeled determ
 - `OPENAI_API_KEY` is optional and must remain server-side.
 
 To enable optional live extraction in Vercel, add `OPENAI_API_KEY` in the project environment variables and redeploy. Keep this key server-side. Never use `NEXT_PUBLIC_OPENAI_API_KEY` or expose API credentials to the browser.
+
+For the optional Gemini review summary, set `GEMINI_API_KEY` and optionally `GEMINI_MODEL` in Vercel Environment Variables. Never use `NEXT_PUBLIC_GEMINI_API_KEY`.
 
 ## Safety and Privacy Limitations
 

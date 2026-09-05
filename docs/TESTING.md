@@ -25,6 +25,7 @@ This checklist provides a repeatable pre-submission and pre-release manual verif
 - [ ] Confirm a safe, non-diagnostic summary is visible.
 - [ ] Confirm clarification questions are visible and phrased as information requests.
 - [ ] When the AI key is absent or the AI service is unavailable, confirm the synthetic fallback disclosure is visible.
+- [ ] Select **Generate AI review summary** and confirm loading, safe text-only output, the human-review disclaimer, and an accessible unavailable state when Gemini is not configured.
 
 ## Validation and failure behavior
 
@@ -56,6 +57,7 @@ This checklist provides a repeatable pre-submission and pre-release manual verif
 - [ ] Export the record as JSON and confirm raw pasted report text is absent.
 - [ ] Confirm expected structured record and review fields remain present in the export.
 - [ ] Confirm no real patient data, API keys, or secrets are used in testing, screenshots, demos, or repository commits.
+- [ ] Confirm the AI review-summary request excludes pasted report text, source excerpts, review history, browser storage, and credentials.
 
 ## Accessibility and usability
 
